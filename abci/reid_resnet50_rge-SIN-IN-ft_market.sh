@@ -16,7 +16,7 @@ cd /home/aaa10329ah/user/waseda/person-reid
 python run_all.py --gpu_ids 0,1,2,3 \
 									--data_dir data/Market/pytorch/ \
 									--train_all \
-									--num_epochs 50	\
+									--num_epochs 100 \
 									--batchsize 32 \
 									-a resnet50 \
 									--bb_weight data/models/resnet50_rge-SIN-IN-ft.pth \
