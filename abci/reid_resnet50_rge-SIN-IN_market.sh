@@ -9,7 +9,7 @@
 source /etc/profile.d/modules.sh
 module load cuda/9.0/9.0.176.4
 export PATH="/home/aaa10329ah/anaconda3/bin:${PATH}"
-source activate waseda
+source activate reid
 cd /home/aaa10329ah/user/waseda/person-reid
 # script
 
