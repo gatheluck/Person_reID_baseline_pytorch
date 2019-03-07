@@ -4,6 +4,7 @@ models/
 logs/
 __pycache__/
 core
+data
 
 # Compiled source #
 ###################
