@@ -5,6 +5,8 @@ import argparse
 import torch
 from torchvision import models
 
+model_names = ['resnet34', 'resnet50', 'resnet101']
+
 base = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
 sys.path.append(base)
 
@@ -28,6 +30,8 @@ class Options():
 		parser.add_argument('--PCB', action='store_true', help='use PCB+ResNet50' )
 		parser.add_argument('--fp16', action='store_true', help='use float16 instead of float32, which will save about 50% memory' )
 		parser.add_argument('--num_epochs', default=30, type=int, help='number of training epochs')
+		parser.add_argument('-a', '--arch', type=str, choices=model_names, required=True, help='name of architechure')
+		parser.add_argument('--bb_weight', type=str, required=True, help='path to backbone weight')
 
 		#parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')
 		parser.add_argument('--which_epoch',default='last', type=str, help='0,1,2,3...or last')

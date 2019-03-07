@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, division
+# from __future__ import print_function, division
 
 import argparse
 import torch
@@ -25,6 +25,8 @@ from shutil import copyfile
 
 base = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
 sys.path.append(base)
+
+model_names = ['resnet34', 'resnet50', 'resnet101']
 
 version =  torch.__version__
 #fp16
@@ -53,6 +55,8 @@ def get_options():
 	parser.add_argument('--PCB', action='store_true', help='use PCB+ResNet50' )
 	parser.add_argument('--fp16', action='store_true', help='use float16 instead of float32, which will save about 50% memory' )
 	parser.add_argument('--num_epochs', default=30, type=int, help='number of training epochs')
+	parser.add_argument('-a', 'arch', type=str, choices=model_names, required=True, help='name of architechure')
+	parser.add_argument('--bb_weight', type=str, required=True, help='path to backbone weight')
 	
 	return parser.parse_args()
 
@@ -311,11 +315,13 @@ def train(opt):
 	#
 
 	if opt.use_dense:
-		model = ft_net_dense(len(class_names), opt.droprate)
+		raise NotImplementedError
+		# model = ft_net_dense(len(class_names), opt.droprate)
 	else:
-		model = ft_net(len(class_names), opt.droprate, opt.stride)
+		model = ft_net(len(class_names), opt.arch, opt.bb_weight, opt.droprate, opt.stride)
 
 	if opt.PCB:
+		raise NotImplementedError
 		model = PCB(len(class_names))
 
 	print(model)
