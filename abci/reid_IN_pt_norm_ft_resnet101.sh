@@ -19,5 +19,5 @@ python run_all.py --gpu_ids 0,1,2,3 \
 									--num_epochs 100 \
 									--batchsize 32 \
 									-a resnet101 \
-									--bb_weight data/models/reid_IN_pt_norm_ft_resnet101.pth \
+									--bb_weight data/models/IN_pt_norm_ft_resnet101.pth \
 									-l logs/reid_IN_pt_norm_ft_resnet101
