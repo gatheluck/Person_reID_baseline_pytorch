@@ -22,6 +22,8 @@ from model import ft_net, ft_net_dense, PCB
 from random_erasing import RandomErasing
 import yaml
 from shutil import copyfile
+import logging
+from tqdm import tqdm
 
 base = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
 sys.path.append(base)
@@ -61,6 +63,7 @@ def get_options():
 	return parser.parse_args()
 
 def train(opt):
+
 	fp16 = opt.fp16
 	data_dir = opt.data_dir
 	#name = opt.name
@@ -162,7 +165,7 @@ def train(opt):
 	y_err['train'] = []
 	y_err['val'] = []
 
-	def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+	def train_model(model, criterion, optimizer, scheduler, num_epochs=25, loggers=None):
 		since = time.time()
 
 		#best_model_wts = model.state_dict()
@@ -183,7 +186,7 @@ def train(opt):
 				running_loss = 0.0
 				running_corrects = 0.0
 				# Iterate over data.
-				for data in dataloaders[phase]:
+				for data in tqdm(dataloaders[phase]):
 					# get the inputs
 					inputs, labels = data
 					now_batch_size,c,h,w = inputs.shape
@@ -244,7 +247,18 @@ def train(opt):
 
 				epoch_loss = running_loss / dataset_sizes[phase]
 				epoch_acc = running_corrects / dataset_sizes[phase]
-				
+
+				# logger
+				if not loggers == None:
+					if phase == 'train':
+						loggers['loss_train'].set(epoch+1, epoch_loss)
+						loggers['acc_train'].set(epoch+1, epoch_acc)
+					elif phase == 'val':
+						loggers['loss_val'].set(epoch+1, epoch_loss)
+						loggers['acc_val'].set(epoch+1, epoch_acc)
+					else:
+						NotImplementedError
+
 				print('{} Loss: {:.4f} Acc: {:.4f}'.format(
 					phase, epoch_loss, epoch_acc))
 				
@@ -387,8 +401,10 @@ def train(opt):
 
 	criterion = nn.CrossEntropyLoss()
 
-	model = train_model(model, criterion, optimizer_ft, exp_lr_scheduler, opt.num_epochs)
+	model = train_model(model, criterion, optimizer_ft, exp_lr_scheduler, opt.num_epochs, opt.loggers)
 
 if __name__ == "__main__":
-	opt = get_options()
-	train(opt) 
+	print("please use run_all.py with flag for option compatibility")
+	raise NotImplementedError
+	# opt = get_options()
+	# train(opt) 

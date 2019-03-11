@@ -1,9 +1,11 @@
 import os
 import sys
+import os.path
 import argparse
 
 import torch
 from torchvision import models
+import logger
 
 model_names = ['resnet34', 'resnet50', 'resnet101']
 
@@ -18,7 +20,8 @@ class Options():
 		parser = argparse.ArgumentParser(description='Run_All')
 		parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')
 		parser.add_argument('-l', '--log_dir', required=True, type=str, help='log_dir')
-		parser.add_argument('--data_dir',default='../Market/pytorch',type=str, help='training dir path')
+		parser.add_argument('--logger_dir', required=True, type=str, help='logger directory')
+		parser.add_argument('--data_dir',default='./data/Market/pytorch',type=str, help='training dir path')
 		parser.add_argument('--train_all', action='store_true', help='use all training data' )
 		parser.add_argument('--color_jitter', action='store_true', help='use color jitter in training' )
 		parser.add_argument('--batchsize', default=8, type=int, help='batchsize')
@@ -32,6 +35,7 @@ class Options():
 		parser.add_argument('--num_epochs', default=30, type=int, help='number of training epochs')
 		parser.add_argument('-a', '--arch', type=str, choices=model_names, required=True, help='name of architechure')
 		parser.add_argument('--bb_weight', type=str, required=True, help='path to backbone weight')
+		# parser.add_argument('--num_retry', type=int, default=1, help='number of retry')
 
 		#parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')
 		parser.add_argument('--which_epoch',default='last', type=str, help='0,1,2,3...or last')
@@ -84,6 +88,19 @@ class Options():
 
 		opt.test_dir = opt.data_dir
 		opt.result_suffix = opt.log_dir.split('/')[-1]
+
+		# logging
+		if not os.path.exists(opt.logger_dir): os.makedirs(opt.logger_dir, exist_ok=True)
+		loggers = {}
+		loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'loss_train.csv'), opt.num_epochs)
+		loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'loss_val.csv'), opt.num_epochs)
+		acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'acc_train.csv'), opt.num_epochs)
+		acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'acc_val.csv'), opt.num_epochs)
+		loggers['loss_train'] = loss_train_logger
+		loggers['loss_val']   = loss_val_logger
+		loggers['acc_train'] = acc_train_logger
+		loggers['acc_val']   = acc_val_logger
+		opt.loggers = loggers
 
 		self.opt = opt
 		self.print_options(opt)
