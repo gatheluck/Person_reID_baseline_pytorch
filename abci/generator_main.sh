@@ -32,7 +32,7 @@ for model in ${models[@]}; do
 		else
 			echo 'Invalid' 1>&2
 			exit 1
-		if
+		fi
 
 		echo -e "#!/bin/bash\n\n#$ -l rt_F=1\n#$ -l h_rt=24:00:00\n#$ -j y\n#$ -N ${name}\n#$ -o ${logpath}\n\n" > ${filename}
 		echo -e "source /etc/profile.d/modules.sh\nmodule load cuda/9.0/9.0.176.4\nexport PATH=\"~/anaconda3/bin:\${PATH}\"\nsource activate ${reid}\n" >> ${filename}
