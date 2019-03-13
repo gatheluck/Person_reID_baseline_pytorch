@@ -46,6 +46,7 @@ for model in ${models[@]}; do
 			--logger_dir logs/${name}/logger_out \
 			--data_dir data/Market/pytorch/ \
 			--batchsize ${batch_size} \
-			--num_epochs 100" >> ${filename}
+			--num_wokers 40 \
+			--num_epochs 30" >> ${filename}
 	done
 done
