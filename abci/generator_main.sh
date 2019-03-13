@@ -4,7 +4,7 @@ where=aist  #(aist mlab)
 
 if [ ${where} = aist ]; then
 	logdir=~/user/waseda/abci_log
-	projectdir=/home/aaa10329ah/user/waseda
+	projectdir=/home/aaa10329ah/user/waseda/person-reid
 	gpu_ids=0,1,2,3
 elif [ ${where} = mlab ]; then
 	logdir=~
