@@ -46,6 +46,6 @@ for model in ${models[@]}; do
 			--data_dir data/Market/pytorch/ \
 			--train_all \
 			--batch_size ${batch_size} \
-			--num_epochs 100" >> ${filename}									
+			--num_epochs 100" >> ${filename}
 	done
 done
