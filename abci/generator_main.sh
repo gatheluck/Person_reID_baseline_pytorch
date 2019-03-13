@@ -16,6 +16,7 @@ else
 fi
 
 project=reid #name of the projects
+env_name=reid
 suffix=main
 mkdir -p ${project}
 for model in ${models[@]}; do
@@ -35,7 +36,7 @@ for model in ${models[@]}; do
 		fi
 
 		echo -e "#!/bin/bash\n\n#$ -l rt_F=1\n#$ -l h_rt=24:00:00\n#$ -j y\n#$ -N ${name}\n#$ -o ${logpath}\n\n" > ${filename}
-		echo -e "source /etc/profile.d/modules.sh\nmodule load cuda/9.0/9.0.176.4\nexport PATH=\"~/anaconda3/bin:\${PATH}\"\nsource activate ${reid}\n" >> ${filename}
+		echo -e "source /etc/profile.d/modules.sh\nmodule load cuda/9.0/9.0.176.4\nexport PATH=\"~/anaconda3/bin:\${PATH}\"\nsource activate ${env_name}\n" >> ${filename}
 
 		echo -e "cd ${projectdir}" >>  ${filename}
 		echo -e "python run_all.py \
