@@ -35,6 +35,7 @@ class Options():
 		parser.add_argument('--num_epochs', default=30, type=int, help='number of training epochs')
 		parser.add_argument('-a', '--arch', type=str, choices=model_names, required=True, help='name of architechure')
 		parser.add_argument('--bb_weight', type=str, required=True, help='path to backbone weight')
+		parser.add_argument('-j', '--num_workers', type=int, default=16, help='number of workers')
 		# parser.add_argument('--num_retry', type=int, default=1, help='number of retry')
 
 		#parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')

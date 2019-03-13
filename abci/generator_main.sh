@@ -45,7 +45,6 @@ for model in ${models[@]}; do
 			--bb_weight data/models/${model}_${train_type}.pth \
 			--logger_dir logs/${name}/logger_out \
 			--data_dir data/Market/pytorch/ \
-			--train_all \
 			--batchsize ${batch_size} \
 			--num_epochs 100" >> ${filename}
 	done
