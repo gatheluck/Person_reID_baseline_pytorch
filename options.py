@@ -90,17 +90,36 @@ class Options():
 		opt.test_dir = opt.data_dir
 		opt.result_suffix = opt.log_dir.split('/')[-1]
 
+		len_itr_train = 1524
+		len_itr_val = 94
+		opt.log_freq_train = int(len_itr_train*0.1)
+		opt.log_freq_val   = int(len_itr_val*0.1)
+		assert opt.log_freq_train > 0
+		assert opt.log_freq_val > 0
+
 		# logging
 		if not os.path.exists(opt.logger_dir): os.makedirs(opt.logger_dir, exist_ok=True)
 		loggers = {}
-		loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'loss_train.csv'), opt.num_epochs)
-		loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'loss_val.csv'), opt.num_epochs)
-		acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'acc_train.csv'), opt.num_epochs)
-		acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'acc_val.csv'), opt.num_epochs)
-		loggers['loss_train'] = loss_train_logger
-		loggers['loss_val']   = loss_val_logger
-		loggers['acc_train'] = acc_train_logger
-		loggers['acc_val']   = acc_val_logger
+		itr_loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'itr_loss_train.csv'), int(opt.log_freq_train*opt.num_epochs))
+		itr_loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'itr_loss_val.csv'), int(opt.log_freq_val*opt.num_epochs))
+		itr_acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'itr_acc_train.csv'), int(opt.log_freq_train*opt.num_epochs))
+		itr_acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'itr_acc_val.csv'), int(opt.log_freq_val*opt.num_epochs))
+
+		ep_loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'ep_loss_train.csv'), opt.num_epochs)
+		ep_loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'ep_loss_val.csv'), opt.num_epochs)
+		ep_acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'ep_acc_train.csv'), opt.num_epochs)
+		ep_acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'ep_acc_val.csv'), opt.num_epochs)
+
+		loggers['itr_loss_train'] = itr_loss_train_logger
+		loggers['itr_loss_val']   = itr_loss_val_logger
+		loggers['itr_acc_train'] = itr_acc_train_logger
+		loggers['itr_acc_val']   = itr_acc_val_logger
+
+		loggers['ep_loss_train'] = ep_loss_train_logger
+		loggers['ep_loss_val']   = ep_loss_val_logger
+		loggers['ep_acc_train'] = ep_acc_train_logger
+		loggers['ep_acc_val']   = ep_acc_val_logger
+
 		opt.loggers = loggers
 
 		self.opt = opt

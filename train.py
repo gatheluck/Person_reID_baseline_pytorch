@@ -171,6 +171,9 @@ def train(opt):
 		#best_model_wts = model.state_dict()
 		best_acc = 0.0
 
+		num_itr_train = 0 # used as index of logger 
+		num_itr_val   = 0
+
 		for epoch in range(num_epochs):
 			print('Epoch {}/{}'.format(epoch+1, num_epochs))
 			print('-' * 10)
@@ -185,8 +188,26 @@ def train(opt):
 
 				running_loss = 0.0
 				running_corrects = 0.0
-				# Iterate over data.
+
+				itr_loss_train = 0.0
+				itr_acc_train  = 0.0
+				itr_loss_val = 0.0
+				itr_acc_val = 0.0
+
+				#len_itr_train  = len(dataloaders['train'])
+				#len_itr_val    = len(dataloaders['val'])
+				#opt.log_freq_train = int(len_itr_train*0.1)
+				#opt.log_freq_val   = int(len_itr_val*0.1)
+				
+				# print("len_itr_train: ", len_itr_train)
+				# print("len_itr_val:", len_itr_val)
+				print("log_freq_train: ", opt.log_freq_train)
+				print("log_freq_val: ", opt.log_freq_val)
+				# assert log_freq_train > 0
+				# assert log_freq_val > 0
+				# Iterate over data. #######################################
 				for data in tqdm(dataloaders[phase]):
+
 					# get the inputs
 					inputs, labels = data
 					now_batch_size,c,h,w = inputs.shape
@@ -245,17 +266,46 @@ def train(opt):
 						running_loss += loss.data[0] * now_batch_size
 					running_corrects += float(torch.sum(preds == labels.data))
 
+					# for logger
+					if phase == 'train':
+						itr_loss_train += loss.item() * now_batch_size
+						itr_acc_train  += float(torch.sum(preds == labels.data))
+					elif phase == 'val':
+						itr_loss_val += loss.item() * now_batch_size
+						itr_acc_val  += float(torch.sum(preds == labels.data))
+
+					# logger
+					if not loggers == None:
+						if phase == 'train' and ((num_itr_train+1)%opt.log_freq_train == 0):
+							print("num_itr_train+1", num_itr_train+1)
+							loggers['itr_loss_train'].set((num_itr_train+1)/opt.log_freq_train , itr_loss_train/opt.log_freq_train)
+							loggers['itr_acc_train'].set((num_itr_train+1)/opt.log_freq_train , itr_acc_train/opt.log_freq_train)
+							itr_loss_train = 0.0
+							itr_acc_train = 0.0
+						elif phase == 'val' and ((num_itr_val+1)%opt.log_freq_val == 0):
+							print("num_itr_val+1", num_itr_val+1)
+							loggers['itr_loss_val'].set((num_itr_val+1)/opt.log_freq_val , itr_loss_val/opt.log_freq_val)
+							loggers['itr_acc_val'].set((num_itr_val+1)/opt.log_freq_val , itr_acc_val/opt.log_freq_val)
+							itr_loss_val = 0.0
+							itr_acc_val = 0.0
+
+					if phase == 'train':
+						num_itr_train += 1
+					elif phase == 'val':
+						num_itr_val += 1 
+
+				# end of one epoch
 				epoch_loss = running_loss / dataset_sizes[phase]
 				epoch_acc = running_corrects / dataset_sizes[phase]
 
 				# logger
 				if not loggers == None:
 					if phase == 'train':
-						loggers['loss_train'].set(epoch+1, epoch_loss)
-						loggers['acc_train'].set(epoch+1, epoch_acc)
+						loggers['ep_loss_train'].set(epoch+1, epoch_loss)
+						loggers['ep_acc_train'].set(epoch+1, epoch_acc)
 					elif phase == 'val':
-						loggers['loss_val'].set(epoch+1, epoch_loss)
-						loggers['acc_val'].set(epoch+1, epoch_acc)
+						loggers['ep_loss_val'].set(epoch+1, epoch_loss)
+						loggers['ep_acc_val'].set(epoch+1, epoch_acc)
 					else:
 						NotImplementedError
 
