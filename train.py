@@ -179,151 +179,147 @@ def train(opt):
 			print('-' * 10)
 
 			# Each epoch has a training and validation phase
-			for phase in ['train', 'val']:
-				if phase == 'train':
-					scheduler.step()
-					model.train(True)  # Set model to training mode
-				else:
-					model.train(False)  # Set model to evaluate mode
 
-				running_loss = 0.0
-				running_corrects = 0.0
+			# for phase in ['train', 'val']:
+			# 	if phase == 'train':
+			# 		scheduler.step()
+			# 		model.train(True)  # Set model to training mode
+			# 	else:
+			# 		model.train(False)  # Set model to evaluate mode
 
-				itr_loss_train = 0.0
-				itr_acc_train  = 0.0
-				itr_loss_val = 0.0
-				itr_acc_val = 0.0
+			# 	running_loss = 0.0
+			# 	running_corrects = 0.0
 
-				#len_itr_train  = len(dataloaders['train'])
-				#len_itr_val    = len(dataloaders['val'])
-				#opt.log_freq_train = int(len_itr_train*0.1)
-				#opt.log_freq_val   = int(len_itr_val*0.1)
+			# 	itr_loss_train = 0.0
+			# 	itr_acc_train  = 0.0
+			# 	itr_loss_val = 0.0
+			# 	itr_acc_val = 0.0
+
+			# 	print("log_freq_train: ", opt.log_freq_train)
+			# 	print("log_freq_val: ", opt.log_freq_val)
 				
-				# print("len_itr_train: ", len_itr_train)
-				# print("len_itr_val:", len_itr_val)
-				print("log_freq_train: ", opt.log_freq_train)
-				print("log_freq_val: ", opt.log_freq_val)
-				# assert log_freq_train > 0
-				# assert log_freq_val > 0
-				# Iterate over data. #######################################
-				for data in tqdm(dataloaders[phase]):
+			# Iterate over data. #######################################
+			for data in tqdm(dataloaders["train"]):
 
-					# get the inputs
-					inputs, labels = data
-					now_batch_size,c,h,w = inputs.shape
-					if now_batch_size<opt.batchsize: # skip the last batch
-						continue
-					#print(inputs.shape)
-					# wrap them in Variable
-					if use_gpu:
-						inputs = Variable(inputs.cuda().detach())
-						labels = Variable(labels.cuda().detach())
-					else:
-						inputs, labels = Variable(inputs), Variable(labels)
-					# if we use low precision, input also need to be fp16
-					if fp16:
-						inputs = inputs.half()
+				# get the inputs
+				inputs, labels = data
+				now_batch_size,c,h,w = inputs.shape
+				if now_batch_size<opt.batchsize: # skip the last batch
+					continue
+				#print(inputs.shape)
+				# wrap them in Variable
+				if use_gpu:
+					inputs = Variable(inputs.cuda().detach())
+					labels = Variable(labels.cuda().detach())
+				else:
+					inputs, labels = Variable(inputs), Variable(labels)
+				# if we use low precision, input also need to be fp16
+				if fp16:
+					inputs = inputs.half()
 
-					# zero the parameter gradients
-					optimizer.zero_grad()
+				# zero the parameter gradients
+				optimizer.zero_grad()
 
-					# forward
-					if phase == 'val':
-						with torch.no_grad():
-							outputs = model(inputs)
-					else:
+				# forward
+				if phase == 'val':
+					with torch.no_grad():
 						outputs = model(inputs)
+				else:
+					outputs = model(inputs)
 
-					if not opt.PCB:
-						_, preds = torch.max(outputs.data, 1)
-						loss = criterion(outputs, labels)
+				if not opt.PCB:
+					_, preds = torch.max(outputs.data, 1)
+					loss = criterion(outputs, labels)
+				else:
+					part = {}
+					sm = nn.Softmax(dim=1)
+					num_part = 6
+					for i in range(num_part):
+						part[i] = outputs[i]
+
+					score = sm(part[0]) + sm(part[1]) +sm(part[2]) + sm(part[3]) +sm(part[4]) +sm(part[5])
+					_, preds = torch.max(score.data, 1)
+
+					loss = criterion(part[0], labels)
+					for i in range(num_part-1):
+						loss += criterion(part[i+1], labels)
+
+				# backward + optimize only if in training phase
+				if phase == 'train':
+					if fp16: # we use optimier to backward loss
+						optimizer.backward(loss)
 					else:
-						part = {}
-						sm = nn.Softmax(dim=1)
-						num_part = 6
-						for i in range(num_part):
-							part[i] = outputs[i]
+						loss.backward()
+					optimizer.step()
 
-						score = sm(part[0]) + sm(part[1]) +sm(part[2]) + sm(part[3]) +sm(part[4]) +sm(part[5])
-						_, preds = torch.max(score.data, 1)
+				# statistics
+				if int(version[0])>0 or int(version[2]) > 3: # for the new version like 0.4.0, 0.5.0 and 1.0.0
+					running_loss += loss.item() * now_batch_size
+				else :  # for the old version like 0.3.0 and 0.3.1
+					running_loss += loss.data[0] * now_batch_size
+				running_corrects += float(torch.sum(preds == labels.data))
 
-						loss = criterion(part[0], labels)
-						for i in range(num_part-1):
-							loss += criterion(part[i+1], labels)
-
-					# backward + optimize only if in training phase
-					if phase == 'train':
-						if fp16: # we use optimier to backward loss
-							optimizer.backward(loss)
-						else:
-							loss.backward()
-						optimizer.step()
-
-					# statistics
-					if int(version[0])>0 or int(version[2]) > 3: # for the new version like 0.4.0, 0.5.0 and 1.0.0
-						running_loss += loss.item() * now_batch_size
-					else :  # for the old version like 0.3.0 and 0.3.1
-						running_loss += loss.data[0] * now_batch_size
-					running_corrects += float(torch.sum(preds == labels.data))
-
-					# for logger
-					if phase == 'train':
-						itr_loss_train += loss.item() * now_batch_size
-						itr_acc_train  += float(torch.sum(preds == labels.data))
-					elif phase == 'val':
-						itr_loss_val += loss.item() * now_batch_size
-						itr_acc_val  += float(torch.sum(preds == labels.data))
-
-					# logger
-					if not loggers == None:
-						if phase == 'train' and ((num_itr_train+1)%opt.log_freq_train == 0):
-							print("num_itr_train+1", num_itr_train+1)
-							loggers['itr_loss_train'].set((num_itr_train+1)/opt.log_freq_train , itr_loss_train/opt.log_freq_train)
-							loggers['itr_acc_train'].set((num_itr_train+1)/opt.log_freq_train , itr_acc_train/opt.log_freq_train)
-							itr_loss_train = 0.0
-							itr_acc_train = 0.0
-						elif phase == 'val' and ((num_itr_val+1)%opt.log_freq_val == 0):
-							print("num_itr_val+1", num_itr_val+1)
-							loggers['itr_loss_val'].set((num_itr_val+1)/opt.log_freq_val , itr_loss_val/opt.log_freq_val)
-							loggers['itr_acc_val'].set((num_itr_val+1)/opt.log_freq_val , itr_acc_val/opt.log_freq_val)
-							itr_loss_val = 0.0
-							itr_acc_val = 0.0
-
-					if phase == 'train':
-						num_itr_train += 1
-					elif phase == 'val':
-						num_itr_val += 1 
-
-				# end of one epoch
-				epoch_loss = running_loss / dataset_sizes[phase]
-				epoch_acc = running_corrects / dataset_sizes[phase]
+				# for logger
+				if phase == 'train':
+					itr_loss_train += loss.item() * now_batch_size
+					itr_acc_train  += float(torch.sum(preds == labels.data))
+				elif phase == 'val':
+					itr_loss_val += loss.item() * now_batch_size
+					itr_acc_val  += float(torch.sum(preds == labels.data))
 
 				# logger
 				if not loggers == None:
-					if phase == 'train':
-						loggers['ep_loss_train'].set(epoch+1, epoch_loss)
-						loggers['ep_acc_train'].set(epoch+1, epoch_acc)
-					elif phase == 'val':
-						loggers['ep_loss_val'].set(epoch+1, epoch_loss)
-						loggers['ep_acc_val'].set(epoch+1, epoch_acc)
-					else:
-						NotImplementedError
+					if phase == 'train' and ((num_itr_train+1)%opt.log_freq_train == 0):
+						print("num_itr_train+1", num_itr_train+1)
+						loggers['itr_loss_train'].set((num_itr_train+1)/opt.log_freq_train , itr_loss_train/opt.log_freq_train)
+						loggers['itr_acc_train'].set((num_itr_train+1)/opt.log_freq_train , itr_acc_train/opt.log_freq_train)
+						itr_loss_train = 0.0
+						itr_acc_train = 0.0
+					elif phase == 'val' and ((num_itr_val+1)%opt.log_freq_val == 0):
+						print("num_itr_val+1", num_itr_val+1)
+						loggers['itr_loss_val'].set((num_itr_val+1)/opt.log_freq_val , itr_loss_val/opt.log_freq_val)
+						loggers['itr_acc_val'].set((num_itr_val+1)/opt.log_freq_val , itr_acc_val/opt.log_freq_val)
+						itr_loss_val = 0.0
+						itr_acc_val = 0.0
 
-				print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-					phase, epoch_loss, epoch_acc))
-				
-				y_loss[phase].append(epoch_loss)
-				y_err[phase].append(1.0-epoch_acc)            
-				# deep copy the model
-				if phase == 'val':
-					last_model_wts = model.state_dict()
-					if epoch%10 == 9:
-						save_network(model, epoch+1)
-					# draw_curve(epoch+1)
+				if phase == 'train':
+					num_itr_train += 1
+				elif phase == 'val':
+					num_itr_val += 1 
 
-					if epoch_acc > best_acc:
-						best_acc = epoch
-						save_network(model, 'best')
+				# validation
+				data in dataloaders["val"]:
+
+			# end of one epoch
+			epoch_loss = running_loss / dataset_sizes[phase]
+			epoch_acc = running_corrects / dataset_sizes[phase]
+
+			# logger
+			if not loggers == None:
+				if phase == 'train':
+					loggers['ep_loss_train'].set(epoch+1, epoch_loss)
+					loggers['ep_acc_train'].set(epoch+1, epoch_acc)
+				elif phase == 'val':
+					loggers['ep_loss_val'].set(epoch+1, epoch_loss)
+					loggers['ep_acc_val'].set(epoch+1, epoch_acc)
+				else:
+					NotImplementedError
+
+			print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+				phase, epoch_loss, epoch_acc))
+			
+			y_loss[phase].append(epoch_loss)
+			y_err[phase].append(1.0-epoch_acc)            
+			# deep copy the model
+			if phase == 'val':
+				last_model_wts = model.state_dict()
+				if epoch%10 == 9:
+					save_network(model, epoch+1)
+				# draw_curve(epoch+1)
+
+				if epoch_acc > best_acc:
+					best_acc = epoch
+					save_network(model, 'best')
 
 			time_elapsed = time.time() - since
 			print('Training complete in {:.0f}m {:.0f}s'.format(

@@ -18,7 +18,7 @@ class Options():
 
 	def initialize(self, parser):
 		parser = argparse.ArgumentParser(description='Run_All')
-		parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')
+		# parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')
 		parser.add_argument('-l', '--log_dir', required=True, type=str, help='log_dir')
 		parser.add_argument('--logger_dir', required=True, type=str, help='logger directory')
 		parser.add_argument('--data_dir',default='./data/Market/pytorch',type=str, help='training dir path')
@@ -28,7 +28,7 @@ class Options():
 		parser.add_argument('--stride', default=2, type=int, help='stride')
 		parser.add_argument('--erasing_p', default=0, type=float, help='Random Erasing probability, in [0,1]')
 		parser.add_argument('--use_dense', action='store_true', help='use densenet121' )
-		parser.add_argument('--lr', default=0.05, type=float, help='learning rate')
+		parser.add_argument('--lr', default=0.075, type=float, help='learning rate')
 		parser.add_argument('--droprate', default=0.5, type=float, help='drop rate')
 		parser.add_argument('--PCB', action='store_true', help='use PCB+ResNet50' )
 		parser.add_argument('--fp16', action='store_true', help='use float16 instead of float32, which will save about 50% memory' )
@@ -37,6 +37,7 @@ class Options():
 		parser.add_argument('--bb_weight', type=str, required=True, help='path to backbone weight')
 		parser.add_argument('-j', '--num_workers', type=int, default=16, help='number of workers')
 		# parser.add_argument('--num_retry', type=int, default=1, help='number of retry')
+		parser.add_argument('--cuda', action='store_true', default=False, help='use cuda')
 
 		#parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')
 		parser.add_argument('--which_epoch',default='last', type=str, help='0,1,2,3...or last')
@@ -90,36 +91,46 @@ class Options():
 		opt.test_dir = opt.data_dir
 		opt.result_suffix = opt.log_dir.split('/')[-1]
 
-		len_itr_train = 1524
-		len_itr_val = 94
-		opt.log_freq_train = int(len_itr_train*0.1)
-		opt.log_freq_val   = int(len_itr_val*0.1)
-		assert opt.log_freq_train > 0
-		assert opt.log_freq_val > 0
+		# len_itr_train = 1524
+		# len_itr_val = 94
+		# opt.log_freq_train = int(len_itr_train*0.1)
+		# opt.log_freq_val   = int(len_itr_val*0.1)
+		# assert opt.log_freq_train > 0
+		# assert opt.log_freq_val > 0
 
 		# logging
 		if not os.path.exists(opt.logger_dir): os.makedirs(opt.logger_dir, exist_ok=True)
 		loggers = {}
-		itr_loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'itr_loss_train.csv'), int(opt.log_freq_train*opt.num_epochs))
-		itr_loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'itr_loss_val.csv'), int(opt.log_freq_val*opt.num_epochs))
-		itr_acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'itr_acc_train.csv'), int(opt.log_freq_train*opt.num_epochs))
-		itr_acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'itr_acc_val.csv'), int(opt.log_freq_val*opt.num_epochs))
+		# itr_loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'itr_loss_train.csv'), int(opt.log_freq_train*opt.num_epochs))
+		# itr_loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'itr_loss_val.csv'), int(opt.log_freq_val*opt.num_epochs))
+		# itr_acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'itr_acc_train.csv'), int(opt.log_freq_train*opt.num_epochs))
+		# itr_acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'itr_acc_val.csv'), int(opt.log_freq_val*opt.num_epochs))
 
-		ep_loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'ep_loss_train.csv'), opt.num_epochs)
-		ep_loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'ep_loss_val.csv'), opt.num_epochs)
-		ep_acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'ep_acc_train.csv'), opt.num_epochs)
-		ep_acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'ep_acc_val.csv'), opt.num_epochs)
+		# ep_loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'ep_loss_train.csv'), opt.num_epochs)
+		# ep_loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'ep_loss_val.csv'), opt.num_epochs)
+		# ep_acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'ep_acc_train.csv'), opt.num_epochs)
+		# ep_acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'ep_acc_val.csv'), opt.num_epochs)
 
-		loggers['itr_loss_train'] = itr_loss_train_logger
-		loggers['itr_loss_val']   = itr_loss_val_logger
-		loggers['itr_acc_train'] = itr_acc_train_logger
-		loggers['itr_acc_val']   = itr_acc_val_logger
+		# loggers['itr_loss_train'] = itr_loss_train_logger
+		# loggers['itr_loss_val']   = itr_loss_val_logger
+		# loggers['itr_acc_train'] = itr_acc_train_logger
+		# loggers['itr_acc_val']   = itr_acc_val_logger
 
-		loggers['ep_loss_train'] = ep_loss_train_logger
-		loggers['ep_loss_val']   = ep_loss_val_logger
-		loggers['ep_acc_train'] = ep_acc_train_logger
-		loggers['ep_acc_val']   = ep_acc_val_logger
+		# loggers['ep_loss_train'] = ep_loss_train_logger
+		# loggers['ep_loss_val']   = ep_loss_val_logger
+		# loggers['ep_acc_train'] = ep_acc_train_logger
+		# loggers['ep_acc_val']   = ep_acc_val_logger
 
+		loss_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'loss_train.csv'), 3000)
+		loss_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'loss_val.csv'), 3000)
+		acc_train_logger = logger.Logger(os.path.join(opt.logger_dir, 'acc_train.csv'), 3000)
+		acc_val_logger   = logger.Logger(os.path.join(opt.logger_dir, 'acc_val.csv'), 3000)
+
+		loggers['loss_train'] = loss_train_logger
+		loggers['loss_val']   = loss_val_logger
+		loggers['acc_train'] = acc_train_logger
+		loggers['acc_val']   = acc_val_logger
+ 
 		opt.loggers = loggers
 
 		self.opt = opt

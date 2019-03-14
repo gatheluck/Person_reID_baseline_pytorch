@@ -5,7 +5,8 @@ import argparse
 base = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../')
 sys.path.append(base)
 
-from train import train
+#from train import train
+from train_net import train
 from test import test
 from evaluate_rerank import evaluate_rerank
 from evaluate_gpu import evaluate_gpu
