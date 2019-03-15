@@ -11,7 +11,7 @@ if [ ${where} = aist ]; then
 elif [ ${where} = mlab ]; then
 	venv=miniconda3
 	logdir=~/iccv2019/abci_log
-	projectdir=~/iccv2019/person-reid
+	projectdir=~/iccv2019/person_reid
 	gpu_ids=0
 else
 	echo 'Invalid' 1>&2
