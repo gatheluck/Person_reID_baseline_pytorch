@@ -1,5 +1,6 @@
 models=(resnet50 resnet101)
-train_types=(IN IN-FGSM IN-HALF IN-IN FGSM FGSM-IN FGSM-HALF FGSM-FGSM)
+# train_types=(IN IN-FGSM IN-HALF IN-IN FGSM FGSM-IN FGSM-HALF FGSM-FGSM)
+train_types=(IN FGSM)
 where=mlab  #(aist mlab)
 
 if [ ${where} = aist ]; then
