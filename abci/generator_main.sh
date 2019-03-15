@@ -9,8 +9,8 @@ if [ ${where} = aist ]; then
 	gpu_ids=0,1,2,3
 elif [ ${where} = mlab ]; then
 	venv=miniconda3
-	logdir=~/iccv2019/person-reid
-	projectdir=~
+	logdir=~/iccv2019/abci_log
+	projectdir=~/iccv2019/person-reid
 	gpu_ids=0
 else
 	echo 'Invalid' 1>&2
@@ -29,15 +29,15 @@ for model in ${models[@]}; do
 		logpath=${logdir}/${name}.o
 
 		if [ ${model} = resnet50 ]; then
-			batch_size=32
+			batch_size=24
 		elif [ ${model} = resnet101 ]; then
-			batch_size=32
+			batch_size=24
 		else
 			echo 'Invalid' 1>&2
 			exit 1
 		fi
 
-		echo -e "#!/bin/bash\n\n#$ -l rt_F=1\n#$ -l h_rt=24:00:00\n#$ -j y\n#$ -N ${name}\n#$ -o ${logpath}\n\n" > ${filename}
+		echo -e "#!/bin/bash\n\n#$ -l rt_G.large=1\n#$ -l h_rt=24:00:00\n#$ -j y\n#$ -N ${name}\n#$ -o ${logpath}\n\n" > ${filename}
 		echo -e "source /etc/profile.d/modules.sh\nmodule load cuda/9.0/9.0.176.4\nexport PATH=\"~/${venv}/bin:\${PATH}\"\nsource activate ${env_name}\n" >> ${filename}
 
 		echo -e "cd ${projectdir}" >>  ${filename}
@@ -48,7 +48,7 @@ for model in ${models[@]}; do
 			--logger_dir logs/${name}/logger_out \
 			--data_dir data/Market/pytorch/ \
 			--batchsize ${batch_size} \
-			--num_workers 40 \
-			--num_epochs 30" >> ${filename}
+			--num_workers 20 \
+			--num_epochs 10" >> ${filename}
 	done
 done
